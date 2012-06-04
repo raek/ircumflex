@@ -1,0 +1,82 @@
+* Components
+** TCP Connections
+- semi text based (7-bit ASCII + 8-bit whatever)
+** Protocol syntax
+*** Message parsing/formatting
+- same for all messages
+*** Message analysis/generation
+- parses/formats type-specific parameters
+** Protocol semantics
+*** Connection management
+- Long living TCP connections
+- Detect if connection has been lost
+- Attempt to reconnect at regular intervals
+*** State management
+- Keep track of what users are in what channels
+- Keep track of channel and user modes
+- Keep track of own nickname, mode, and joined channels
+- Attempt to change to preferred nickname
+*** Configuration
+- Channels to join on connection
+** Network of event processors
+- on top of Lamina
+** Composability and extensibility
+- should be possible to form new event sources and handlers
+- they should be equal in power to built-in ones
+- state and configuration should be extensible too
+
+* Issues / Things to consider / Mini-rants
+
+** Encoding
+
+The IRC protocol specification [RFC1459] does not specify the encoding
+scheme to use, except that bytes with the most significant bit cleared
+are ASCII. Encoding schemes like Latin-1 and UTF-8 can be used, but
+clients have to agree (somehow) on which one to use. UTF-8 with
+fall-back to CP-1252 is a reasonable default for Western Europe and
+the US.
+
+The maximum message length is 512 bytes, including the terminating
+CR-LF. Since the limit is measured in bytes, it is complicated to
+translate it into characters when using a variable length encoding
+scheme, such as UTF-8.
+
+** Lots of unused commands in the specification
+
+Most of the commands described in the original specification [RFC1459]
+are not relevant for most clients. A pragmatic implementation should
+only implement those which are actually used.
+
+** Convenience forms of commands / Commands denoting multiple logical events
+
+In the original specification [RFC1459] many commands accepts multiple
+parameters as a shorter alternative to sending multiple commands. For
+example, the KICK command accepts comma-separated lists of nicknames
+and channels, even though this is form rarely used in practice.
+
+Section 3.2.8 of [RFC2812] specifically mentions that servers may not
+send KICK messages with multiple nicknames due to compatibility with
+older clients. Such rules for other message types are not mentioned.
+
+** Illogical command naming
+
+Some command names have a bit odd named. For instance, a PRIVMSG is
+not a private message; it is any kind of message (in the application
+sense, not in the protocol sense). Additionally, the name of all
+command replies are numeric codes. The specification gives them
+symbolic names for documentation purpose, though.
+
+Should an IRC library attempt to expose "improved" command names to
+the library user?
+
+* References
+- [RFC1459] Internet Relay Chat Protocol
+  http://tools.ietf.org/html/rfc1459
+- [RFC2810] Internet Relay Chat: Architecture
+  http://tools.ietf.org/html/rfc2810
+- [RFC2811] Internet Relay Chat: Channel Management
+  http://tools.ietf.org/html/rfc2811
+- [RFC2812] Internet Relay Chat: Client Protocol
+  http://tools.ietf.org/html/rfc2812
+- [RFC2813] Internet Relay Chat: Server Protocol
+  http://tools.ietf.org/html/rfc2813
