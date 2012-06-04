@@ -25,6 +25,11 @@
 - they should be equal in power to built-in ones
 - state and configuration should be extensible too
 
+* Network specifics
+** QuakeNet
+- NICK/NAME registration is not completed until PING is answered
+- Client commands are ignored before reply 001 is transmitted (?)
+
 * Issues / Things to consider / Mini-rants
 
 ** Encoding
