@@ -71,3 +71,20 @@
     (wait-for-result registration 1000)
     => truthy))
 
+(fact "registration fails when all nicks are in use"
+  (let [to-client     (channel)
+        from-client   (channel)
+        nick-messages (filter-by-type ::msg/nick from-client)
+        user-messages (filter-by-type ::msg/user from-client)
+        registration  (register-connection to-client from-client
+                                           ["my_nick"]
+                                           "my_login"
+                                           "my real name")]
+    (wait-for-message nick-messages 1000)
+    => (msg/nick-command "my_nick")
+    (wait-for-message user-messages 1000)
+    => (msg/user-command "my_login" "my real name")
+    (enqueue to-client (msg/nicknameinuse-error "my_nick" "Nickname is already in use."))
+    (wait-for-result registration 1000)
+    => falsey))
+
