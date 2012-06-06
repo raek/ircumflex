@@ -1,6 +1,8 @@
 (ns ircumflex.connection
   (:require [ircumflex.message :as msg])
-  (:use lamina.core))
+  (:use aleph.tcp
+        lamina.core
+        gloss.core))
 
 (defn filter-by-type
   {:internal true}
@@ -17,3 +19,11 @@
                   (enqueue result (msg/has-type? msg ::msg/welcome))))
     result))
 
+(defn client-channel
+  "Get a client channel. "
+  [& {:keys [nick host port]
+      :or {nick "ircumflex" port 6667}}]
+  (let [delimiters ["\r", "\n"]
+        frame (string :utf-8 :delimiters delimiters)
+        ch (tcp-client {:host host, :port port, :frame frame})]
+    ch))
