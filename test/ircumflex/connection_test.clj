@@ -4,6 +4,14 @@
         lamina.core
         midje.sweet))
 
+(fact "it responds to pings"
+  (let [to-client   (channel)
+        from-client (channel)]
+    (respond-to-pings to-client from-client)
+    (enqueue to-client (msg/ping-command "653913888"))
+    (wait-for-message from-client 1000)
+    => (msg/pong-command "653913888")))
+
 (fact "registration succeeds when nick and user commands are answered by a welcome"
   (let [to-client     (channel)
         from-client   (channel)

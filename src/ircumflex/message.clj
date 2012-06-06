@@ -32,6 +32,18 @@
    :target target
    :message message})
 
+(defn ping-command
+  "Construct a PING command message."
+  [token]
+  {:type ::ping
+   :token token})
+
+(defn pong-command
+  "Construct a PONG command message."
+  [token]
+  {:type ::pong
+   :token token})
+
 (defn welcome-reply
   "Construct a 001 (RPL_WELCOME) reply message."
   [target message]
@@ -40,7 +52,7 @@
    :message message})
 
 (defn nicknameinuse-error
-  "Construct a 433 (ERR_NICKNAMEINUSE) error message"
+  "Construct a 433 (ERR_NICKNAMEINUSE) error message."
   [target message]
   {:type ::nicknameinuse
    :target target

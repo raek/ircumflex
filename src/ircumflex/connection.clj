@@ -7,6 +7,19 @@
   [type ch]
   (filter* #(msg/has-type? % type) ch))
 
+(defn ping-response
+  "Construct a PONG message suitable as the response to the given PING."
+  [msg]
+  (msg/pong-command (:token msg)))
+
+(defn respond-to-pings
+  "Answer each incoming PING message with a PONG."
+  [from-server to-server]
+  (siphon (->> (fork from-server)
+               (filter-by-type ::msg/ping)
+               (map* ping-response))
+          to-server))
+
 (defn register-connection
   "Send messages to register the IRC client with the IRC server.
 
