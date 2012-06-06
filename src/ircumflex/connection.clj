@@ -1,6 +1,7 @@
 (ns ircumflex.connection
   (:require [ircumflex.message :as msg])
-  (:use aleph.tcp
+  (:use ircumflex.serialization
+        aleph.tcp
         lamina.core
         gloss.core))
 
@@ -19,11 +20,44 @@
                   (enqueue result (msg/has-type? msg ::msg/welcome))))
     result))
 
-(defn client-channel
-  "Get a client channel. "
-  [& {:keys [nick host port]
-      :or {nick "ircumflex" port 6667}}]
+(defn irc-client
+  [host port]
   (let [delimiters ["\r", "\n"]
         frame (string :utf-8 :delimiters delimiters)
         ch (tcp-client {:host host, :port port, :frame frame})]
     ch))
+
+(defn connect
+  [host port success failure]
+  (on-realized (irc-client host port) success failure))
+
+(defn register
+  [ch & {:keys [nick username hostname servername realname]
+         :or {nick "ircumflex"
+              username "ircumflex" 
+              hostname "localhost" 
+              servername "localhost" 
+              realname "ircumflex"}}]
+  (message->server ch [[nil nil nil] "NICK" [nick]])
+  (message->server ch [[nil nil nil] "USER" 
+                       [username hostname servername realname]]))
+
+(defn start
+  []
+  (connect 
+    "localhost" 6667 
+    (fn [ch] 
+      (register ch)
+      (receive-all ch #(println %)))
+    #(println "failed" %)))
+
+(defn message->server
+  "Send message to server."
+  [ch message]
+  (let [line (message->line message)]
+    (enqueue ch line)))
+
+(defn server->message
+  "Get message from server. "
+  [ch callback]
+  (receive ch (fn [line] (callback (line->message line)))))
