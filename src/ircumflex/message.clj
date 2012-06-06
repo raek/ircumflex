@@ -18,6 +18,20 @@
    :login login
    :real-name real-name})
 
+(defn privmsg-command
+  "Construct a PRIVMSG command message."
+  [target message]
+  {:type ::privmsg
+   :target target
+   :message message})
+
+(defn notice-command
+  "Construct a NOTICE command message."
+  [target message]
+  {:type ::notice
+   :target target
+   :message message})
+
 (defn welcome-reply
   "Construct a 001 (RPL_WELCOME) reply message."
   [target message]

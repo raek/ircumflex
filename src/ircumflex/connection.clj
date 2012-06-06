@@ -9,11 +9,12 @@
 
 (defn register-connection
   "Send messages to register the IRC client with the IRC server. "
-  [ch nick login real-name]
-  (enqueue ch (msg/nick-command nick))
-  (enqueue ch (msg/user-command login real-name))
+  [from-server to-server nick login real-name]
+  (enqueue to-server (msg/nick-command nick))
+  (enqueue to-server (msg/user-command login real-name))
   (let [result (result-channel)]
-    (receive ch (fn [msg]
-                  (enqueue result (msg/has-type? msg ::msg/welcome))))
+    (receive (filter-by-type ::msg/welcome (fork from-server))
+             (fn [_]
+               (enqueue result true)))
     result))
 
