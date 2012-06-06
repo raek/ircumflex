@@ -38,26 +38,19 @@
               hostname "localhost" 
               servername "localhost" 
               realname "ircumflex"}}]
-  (message->server ch [[nil nil nil] "NICK" [nick]])
-  (message->server ch [[nil nil nil] "USER" 
-                       [username hostname servername realname]]))
+  (enqueue ch [[nil nil nil] "NICK" [nick]])
+  (enqueue ch [[nil nil nil] "USER" 
+               [username hostname servername realname]]))
 
 (defn start
   []
   (connect 
     "localhost" 6667 
     (fn [ch] 
-      (register ch)
-      (receive-all ch #(println %)))
+      (let [from-server (map* line->message ch)
+            to-server (map* message->line (channel))]
+        (siphon to-server ch)
+        (let [message-ch (splice from-server to-server)]
+          (register message-ch)
+          (receive-all message-ch #(println (last (get % 2)))))))
     #(println "failed" %)))
-
-(defn message->server
-  "Send message to server."
-  [ch message]
-  (let [line (message->line message)]
-    (enqueue ch line)))
-
-(defn server->message
-  "Get message from server. "
-  [ch callback]
-  (receive ch (fn [line] (callback (line->message line)))))
