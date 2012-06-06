@@ -14,9 +14,9 @@
                                            "my_login"
                                            "my real name")]
     (wait-for-message nick-messages 1000)
-    => (contains (msg/nick-command "my_nick"))
+    => (msg/nick-command "my_nick")
     (wait-for-message user-messages 1000)
-    => (contains (msg/user-command "my_login" "my real name"))
+    => (msg/user-command "my_login" "my real name")
     (enqueue to-client (msg/welcome-reply "my_nick" "Welcome!"))
     (wait-for-result registration 1000)
     => truthy))
@@ -32,9 +32,9 @@
                                            "my real name")]
     (enqueue to-client (msg/notice-command "AUTH" "*** Looking up your hostname"))
     (wait-for-message nick-messages 1000)
-    => (contains (msg/nick-command "my_nick"))
+    => (msg/nick-command "my_nick")
     (wait-for-message user-messages 1000)
-    => (contains (msg/user-command "my_login" "my real name"))
+    => (msg/user-command "my_login" "my real name")
     (enqueue to-client (msg/welcome-reply "my_nick" "Welcome!"))
     (wait-for-result registration 1000)
     => truthy
