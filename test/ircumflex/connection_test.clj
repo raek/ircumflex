@@ -10,7 +10,7 @@
         nick-messages (filter-by-type ::msg/nick from-client)
         user-messages (filter-by-type ::msg/user from-client)
         registration  (register-connection to-client from-client
-                                           "my_nick"
+                                           ["my_nick"]
                                            "my_login"
                                            "my real name")]
     (wait-for-message nick-messages 1000)
@@ -27,7 +27,7 @@
         nick-messages (filter-by-type ::msg/nick from-client)
         user-messages (filter-by-type ::msg/user from-client)
         registration  (register-connection to-client from-client
-                                           "my_nick"
+                                           ["my_nick"]
                                            "my_login"
                                            "my real name")]
     (enqueue to-client (msg/notice-command "AUTH" "*** Looking up your hostname"))
@@ -42,4 +42,32 @@
     (channel-seq to-client 1000)
     => [(msg/notice-command "AUTH" "*** Looking up your hostname")
         (msg/welcome-reply "my_nick" "Welcome!")]))
+
+(fact "register with another nick if it is in use"
+  (let [to-client     (channel)
+        from-client   (channel)
+        nick-messages (filter-by-type ::msg/nick from-client)
+        user-messages (filter-by-type ::msg/user from-client)
+        registration  (register-connection to-client from-client
+                                           ["first" "second" "third" "fourth"]
+                                           "my_login"
+                                           "my real name")]
+    (enqueue to-client (msg/notice-command "AUTH" "*** Looking up your hostname"))
+    (wait-for-message nick-messages 1000)
+    => (msg/nick-command "first")
+    (wait-for-message user-messages 1000)
+    => (msg/user-command "my_login" "my real name")
+    (enqueue to-client (msg/nicknameinuse-error "first" "Nickname is already in use."))
+    (wait-for-message nick-messages 1000)
+    => (msg/nick-command "second")
+    (wait-for-message user-messages 1000)
+    => (msg/user-command "my_login" "my real name")
+    (enqueue to-client (msg/nicknameinuse-error "second" "Nickname is already in use."))
+    (wait-for-message nick-messages 1000)
+    => (msg/nick-command "third")
+    (wait-for-message user-messages 1000)
+    => (msg/user-command "my_login" "my real name")
+    (enqueue to-client (msg/welcome-reply "third" "Welcome!"))
+    (wait-for-result registration 1000)
+    => truthy))
 

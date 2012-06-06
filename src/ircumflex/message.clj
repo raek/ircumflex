@@ -39,3 +39,10 @@
    :target target
    :message message})
 
+(defn nicknameinuse-error
+  "Construct a 433 (ERR_NICKNAMEINUSE) error message"
+  [target message]
+  {:type ::nicknameinuse
+   :target target
+   :message message})
+
