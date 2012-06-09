@@ -1,60 +1,47 @@
-(ns ircumflex.message)
+(ns ircumflex.message
+  (:require [clojure.string :as str]))
 
 (defn has-type?
   "Test if the message has the given type."
   [msg type]
   (= (:type msg) type))
 
-(defn nick-command
-  "Construct a NICK command message."
-  [nick]
-  {:type ::nick
-   :nick nick})
+(defn defmessage*
+  [name-sym proto-name doc-name kind params]
+  (let [fn-name-sym (symbol (format "%s-%s" (name name-sym) kind))
+        full-name   (if (= proto-name doc-name)
+                      proto-name
+                      (format "%s (%s)" proto-name doc-name))
+        docstring   (format "Construct a %s %s message." full-name kind)
+        type-kw     (keyword (name (ns-name *ns*))
+                             (name name-sym))
+        body        (zipmap (cons :type (map keyword params))
+                            (cons type-kw params))]
+    (list 'defn fn-name-sym docstring params)))
 
-(defn user-command
-  "Construct a USER command message."
-  [login real-name]
-  {:type ::user
-   :login login
-   :real-name real-name})
+(defmacro defcommand
+  [name-sym params]
+  (let [proto-name (str/upper-case (name name-sym))]
+    (defmessage* name-sym proto-name proto-name "command" params)))
 
-(defn privmsg-command
-  "Construct a PRIVMSG command message."
-  [target message]
-  {:type ::privmsg
-   :target target
-   :message message})
+(defmacro defreply
+  [proto-name name-sym]
+  (let [doc-name (format "RPL_%s" (str/upper-case name-sym))]
+    (defmessage* name-sym proto-name doc-name "reply" '[target message])))
 
-(defn notice-command
-  "Construct a NOTICE command message."
-  [target message]
-  {:type ::notice
-   :target target
-   :message message})
+(defmacro deferror
+  [proto-name name-sym]
+  (let [doc-name (format "ERR_%s" (str/upper-case name-sym))]
+    (defmessage* name-sym proto-name doc-name "error" '[target message])))
 
-(defn ping-command
-  "Construct a PING command message."
-  [token]
-  {:type ::ping
-   :token token})
+(defcommand nick [nick])
+(defcommand user [login real-name])
+(defcommand privmsg [target message])
+(defcommand notice [target message])
+(defcommand ping [token])
+(defcommand pong [token])
 
-(defn pong-command
-  "Construct a PONG command message."
-  [token]
-  {:type ::pong
-   :token token})
+(defreply "001" welcome)
 
-(defn welcome-reply
-  "Construct a 001 (RPL_WELCOME) reply message."
-  [target message]
-  {:type ::welcome
-   :target target
-   :message message})
-
-(defn nicknameinuse-error
-  "Construct a 433 (ERR_NICKNAMEINUSE) error message."
-  [target message]
-  {:type ::nicknameinuse
-   :target target
-   :message message})
+(deferror "433" nicknameinuse)
 
