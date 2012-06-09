@@ -17,7 +17,7 @@
                              (name name-sym))
         body        (zipmap (cons :type (map keyword params))
                             (cons type-kw params))]
-    (list 'defn fn-name-sym docstring params)))
+    (list 'defn fn-name-sym docstring params body)))
 
 (defmacro defcommand
   [name-sym params]
