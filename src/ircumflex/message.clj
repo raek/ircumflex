@@ -8,6 +8,7 @@
 
 (defn defmessage*
   "Generate the code for a message constructor function definition."
+  {:internal true}
   [name-sym proto-name doc-name kind params]
   (let [fn-name-sym (symbol (format "%s-%s" (name name-sym) kind))
         full-name   (if (= proto-name doc-name)
@@ -39,6 +40,7 @@
    quux] as its formal parameters and will, when called, return a map
    where :baz and :quux are associated with the corresponding actual
    paramters."
+  {:internal true}
   [name-sym params]
   (let [proto-name (str/upper-case (name name-sym))]
     (defmessage* name-sym proto-name proto-name "command" params)))
@@ -61,6 +63,7 @@
    the IRC specification (where it is documented with the symbolic
    name RPL_FOOBAR). The constructor function always take two
    arguments which are put under the :target and :message key."
+  {:internal true}
   [numeric name-sym]
   (let [doc-name (format "RPL_%s" (str/upper-case name-sym))]
     (defmessage* name-sym numeric doc-name "reply" '[target message])))
@@ -83,6 +86,7 @@
    the IRC specification (where it is documented with the symbolic
    name ERR_FOOBAR). The constructor function always take two
    arguments which are put under the :target and :message key."
+  {:internal true}
   [numeric name-sym]
   (let [doc-name (format "ERR_%s" (str/upper-case name-sym))]
     (defmessage* name-sym numeric doc-name "error" '[target message])))
