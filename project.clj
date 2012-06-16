@@ -8,5 +8,5 @@
   :profiles {:dev {:dependencies [[midje "1.4.0"]
                                   [com.stuartsierra/lazytest "1.2.3"]]
                    :repositories {"stuart" "http://stuartsierra.com/maven2"}}}
-  :plugins [[lein-midje "2.0.0-SNAPSHOT"]]
+  :plugins [[lein-midje "2.0.0-20120327.004212-2"]]
   :min-lein-version "2.0.0")
