@@ -66,7 +66,7 @@
    the IRC specification. The constructor function will have [baz
    quux] as its formal parameters and will, when called, return a map
    where :baz and :quux are associated with the corresponding actual
-   paramters."
+   parameters."
   {:internal true}
   [name-sym params]
   (let [proto-name (str/upper-case (name name-sym))]
