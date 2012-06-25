@@ -8,6 +8,39 @@
   (has-type? {:type :abc} :def)
   => false)
 
+(fact "defcommand functions behave like in the docstring example"
+  (defcommand foobar [baz quux])
+  (:doc (meta #'foobar-command))
+  => "Construct a FOOBAR command message."
+  (:arglists (meta #'foobar-command))
+  => '([baz quux])
+  (foobar-command "x" "y")
+  => {:type ::foobar
+      :baz "x"
+      :quux "y"})
+
+(fact "defreply functions behave like in the docstring example"
+  (defreply "200" foobar)
+  (:doc (meta #'foobar-reply))
+  => "Construct a 200 (RPL_FOOBAR) reply message."
+  (:arglists (meta #'foobar-reply))
+  => '([target message])
+  (foobar-reply "x" "y")
+  => {:type ::foobar
+      :target "x"
+      :message "y"})
+
+(fact "deferror functions behave like in the docstring example"
+  (deferror "400" foobar)
+  (:doc (meta #'foobar-error))
+  => "Construct a 400 (ERR_FOOBAR) error message."
+  (:arglists (meta #'foobar-error))
+  => '([target message])
+  (foobar-error "x" "y")
+  => {:type ::foobar
+      :target "x"
+      :message "y"})
+
 (defn error-checker [type]
   (fn [x]
     (= (-> x ex-data :object :type)
