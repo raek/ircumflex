@@ -2,6 +2,12 @@
   (:use ircumflex.message
         midje.sweet))
 
+(fact "has-type? checks the :type entry in the given map"
+  (has-type? {:type :abc} :abc)
+  => true
+  (has-type? {:type :abc} :def)
+  => false)
+
 (defn error-checker [type]
   (fn [x]
     (= (-> x ex-data :object :type)
