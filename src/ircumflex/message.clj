@@ -1,4 +1,31 @@
 (ns ircumflex.message
+  "This namespace provides functions to work with and convert between
+   IRC message representations. There are three different
+   representations: message lines (strings), raw messages (vectors),
+   and message maps.
+
+   An IRC message has the following anatomy:
+
+   - an optional sender
+   - a message type
+   - zero or more parameters; the last one may contain spaces
+
+   The sender is either a nickname or a server hostname. If it is a
+   nickname, it may also have optional login and hostname information
+   attached to it. The meaning of the parameters depend on the message
+   type.
+
+   A raw message is a vector with the following structure (all fields
+   are strings):
+
+   [[sender login host] type [params...]]
+
+   sender    the sender, without the login and hostname, or nil
+   login     the login of the sender or nil
+   host      the hostname of the sender or nil
+   type      the message type
+   params    the message parameters, zero or more"
+  (:use [slingshot.slingshot :only [throw+]])
   (:require [clojure.string :as str]))
 
 (defn has-type?
@@ -101,4 +128,59 @@
 (defreply "001" welcome)
 
 (deferror "433" nicknameinuse)
+
+(defn make-char-checker
+  {:internal true}
+  [illegal-chars]
+  (let [re (re-pattern (str "[\\Q" illegal-chars "\\E]"))]
+    (fn [s]
+      (when-let [c (re-find re s)]
+        (throw+ {:type ::illegal-char
+                 :char c
+                 :string s})))))
+
+(def ^{:internal true} check-for-illegal-line-char
+  (make-char-checker "\u0000\r\n"))
+
+(def ^{:internal true} line-regex
+  #"(?::([^ ]+) +)?([^ :][^ ]*)(?: +(.+))?")
+
+(def ^{:internal true} sender-regex
+  #"([^!@]+)?(?:!([^@]*))?(?:@(.*))?")
+
+(def ^{:internal true} param-regex
+  #"(?:(?<!:)[^ :][^ ]*|(?<=:).*)")
+
+(defn line->raw
+  "Parse a IRC message line into a raw message vector.
+
+   The line should not contain any \\0, \\r or \\n characters and should be 
+
+   Errors (thrown using Slingshot):
+
+   {:type ::illegal-char, :char c, :string s}
+
+   Thrown when the line 's' contains the illegal character 'c'.
+
+   {:type ::syntax-error, :line line}
+
+   Thrown when the line 'line' is not syntactically valid.
+
+   Example:
+
+   (line-raw \":nick!user@example.com PRIVMSG #ircumflex :Message goes here\")
+   => [[\"nick\" \"user\" \"example.com\"]
+       \"PRIVMSG\"
+       [\"#ircumflex\" \"Message goes here\"]]"
+  [line]
+  (check-for-illegal-line-char line)
+  (if-let [[_ sender-str type param-str]
+           (re-matches line-regex line)]
+    (let [sender (let [[_ nick login host]
+                       (re-matches sender-regex (or sender-str ""))]
+                   [nick login host])
+          params (vec (re-seq param-regex (or param-str "")))]
+      [sender type params])
+    (throw+ {:type ::syntax-error
+             :line line})))
 
