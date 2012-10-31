@@ -136,10 +136,10 @@
     (fn [s]
       (when-let [c (re-find re s)]
         (throw+ {:type ::illegal-char
-                 :char c
+                 :char (first c)
                  :string s})))))
 
-(def ^{:internal true} check-for-illegal-line-char
+(def ^{:internal true} check-line
   (make-char-checker "\u0000\r\n"))
 
 (def ^{:internal true} line-regex
@@ -173,7 +173,7 @@
        \"PRIVMSG\"
        [\"#ircumflex\" \"Message goes here\"]]"
   [line]
-  (check-for-illegal-line-char line)
+  (check-line line)
   (if-let [[_ sender-str type param-str]
            (re-matches line-regex line)]
     (let [sender (let [[_ nick login host]
@@ -183,4 +183,73 @@
       [sender type params])
     (throw+ {:type ::syntax-error
              :line line})))
+
+(defn prohibit-initial-colon
+  {:internal true}
+  [s]
+  (when (.startsWith s ":")
+    (throw+ {:type ::illegal-char
+             :char \:
+             :string s})))
+
+(def ^{:internal true} check-nick
+  (make-char-checker "\u0000\r\n!@ "))
+
+(def ^{:internal true} check-login
+  (make-char-checker "\u0000\r\n@ "))
+
+(def ^{:internal true} check-host
+  (make-char-checker "\u0000\r\n "))
+
+(def ^{:internal true} check-command
+  (let [checker (make-char-checker "\u0000\r\n ")]
+    #(do (prohibit-initial-colon %)
+         (checker %))))
+
+(def ^{:internal true} check-param
+  (let [checker (make-char-checker "\u0000\r\n ")]
+    #(do (prohibit-initial-colon %)
+         (checker %))))
+
+(def ^{:internal true} check-last-param
+  (make-char-checker "\u0000\r\n"))
+
+(defmacro str-when
+  "Like 'when', but returns \"\" when the condition is false."
+  {:internal true}
+  [condition & body]
+  `(if ~condition
+     (do ~@body)
+     ""))
+
+(defn raw->line
+  "Turn a raw IRC message vector into a message line.
+
+   Example:
+
+   (raw->line [[\"nick\" \"login\" \"example.com\"]
+               \"PRIVMSG\"
+               [\"#ircumflex\" \"Message goes here\"]])
+   => \":nick!login@example.com PRIVMSG #ircumflex :Message goes here\""
+  [msg]
+  (let [[[nick login host] command params] msg
+        sender-str (str-when nick
+                     (check-nick nick)
+                     (let [login-str (str-when login
+                                       (check-login login)
+                                       (str "!" login))
+                           host-str  (str-when host
+                                       (check-host host)
+                                       (str "@" host))]
+                       (str ":" nick login-str host-str " ")))
+        param-strs (if (empty? params)
+                     []
+                     (let [butlast-param-strs (vec (for [param (pop params)]
+                                                     (do (check-param param)
+                                                         (str " " param))))
+                           last-param         (peek params)]
+                       (check-last-param last-param)
+                       (conj butlast-param-strs (str " :" last-param))))]
+    (check-command command)
+    (apply str sender-str command param-strs)))
 
