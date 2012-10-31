@@ -152,9 +152,9 @@
   #"(?:(?<!:)[^ :][^ ]*|(?<=:).*)")
 
 (defn line->raw
-  "Parse a IRC message line into a raw message vector.
+  "Parse an IRC message line into a raw message vector.
 
-   The line should not contain any \\0, \\r or \\n characters and should be 
+   The line should not contain any \\0, \\r or \\n characters.
 
    Errors (thrown using Slingshot):
 
@@ -168,8 +168,8 @@
 
    Example:
 
-   (line-raw \":nick!user@example.com PRIVMSG #ircumflex :Message goes here\")
-   => [[\"nick\" \"user\" \"example.com\"]
+   (line-raw \":nick!login@example.com PRIVMSG #ircumflex :Message goes here\")
+   => [[\"nick\" \"login\" \"example.com\"]
        \"PRIVMSG\"
        [\"#ircumflex\" \"Message goes here\"]]"
   [line]
