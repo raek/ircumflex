@@ -253,3 +253,51 @@
     (check-command command)
     (apply str sender-str command param-strs)))
 
+(defn message->raw
+  "Turn an IRC message map into a raw message vector.
+
+   Example:
+
+   (message->raw {:type    ::privmsg
+                  :sender  \"nick\"
+                  :login   \"login\"
+                  :host    \"example.com\"
+                  :target  \"#channel\"
+                  :message \"Message goes here\"})
+   => [[\"nick\" \"login\" \"example.com\"]
+       \"PRIVMSG\"
+       [\"#channel\" \"Message goes here\"]]"
+  [msg]
+  (let [{:keys [sender login host type]} msg
+        type-str (str/upper-case (name type))
+        params [(:target msg) (:message msg)]]
+    [[sender login host]
+     type-str
+     params]))
+
+(defn raw->message
+  "Turn a raw IRC message vector into a message map.
+
+   Example:
+
+   (message->raw [[\"nick\" \"login\" \"example.com\"]
+                  \"PRIVMSG\"
+                  [\"#channel\" \"Message goes here\"]])
+   => {:type    ::privmsg
+       :sender  \"nick\"
+       :login   \"login\"
+       :host    \"example.com\"
+       :target  \"#channel\"
+       :message \"Message goes here\"}"
+  [msg]
+  (let [[[sender login host] type params] msg
+        type-kw (keyword "ircumflex.message"
+                         (str/lower-case (name type)))
+        [target message] params]
+    {:type    type-kw
+     :sender  sender
+     :login   login
+     :host    host
+     :target  target
+     :message message}))
+

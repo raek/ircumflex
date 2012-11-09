@@ -1,5 +1,5 @@
 (ns ircumflex.message-test
-  (:use ircumflex.message
+  (:use [ircumflex.message :as msg]
         midje.sweet))
 
 (fact "has-type? checks the :type entry in the given map"
@@ -196,4 +196,26 @@
 (fact "a non-final param may not begin with a colon"
   (raw->line [[nil nil nil] "COMMAND" [":medial" "final"]])
   => (throws illegal-char-error?))
+
+(fact "can generalize PRIVMSG messages"
+  (message->raw {:type    ::msg/privmsg
+                 :sender  "nick"
+                 :login   "login"
+                 :host    "example.com"
+                 :target  "#channel"
+                 :message "Message goes here"})
+  => [["nick" "login" "example.com"]
+      "PRIVMSG"
+      ["#channel" "Message goes here"]])
+
+(fact "can specialize PRIVMSG messages"
+  (raw->message [["nick" "login" "example.com"]
+                 "PRIVMSG"
+                 ["#channel" "Message goes here"]])
+  => {:type    ::msg/privmsg
+      :sender  "nick"
+      :login   "login"
+      :host    "example.com"
+      :target  "#channel"
+      :message "Message goes here"})
 
