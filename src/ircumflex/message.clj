@@ -301,3 +301,34 @@
      :target  target
      :message message}))
 
+(defn message->line
+  "Turn an IRC message map into a message line.
+
+   Example:
+
+   (message->line {:type    ::msg/privmsg
+                   :sender  \"nick\"
+                   :login   \"login\"
+                   :host    \"example.com\"
+                   :target  \"#channel\"
+                   :message \"Message goes here\"})
+   => \":nick!login@example.com PRIVMSG #channel :Message goes here\""
+  [msg]
+  (raw->line (message->raw msg)))
+
+(defn line->message
+  "Parse an IRC message line into a message map.
+
+   Example:
+
+   (line->message
+    \":nick!login@example.com PRIVMSG #channel :Message goes here\")
+   => {:type    ::msg/privmsg
+       :sender  \"nick\"
+       :login   \"login\"
+       :host    \"example.com\"
+       :target  \"#channel\"
+       :message \"Message goes here\"}"
+  [line]
+  (raw->message (line->raw line)))
+

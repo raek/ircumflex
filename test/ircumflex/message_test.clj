@@ -219,3 +219,21 @@
       :target  "#channel"
       :message "Message goes here"})
 
+(fact "can format a message map into a line"
+  (message->line {:type    ::msg/privmsg
+                  :sender  "nick"
+                  :login   "login"
+                  :host    "example.com"
+                  :target  "#channel"
+                  :message "Message goes here"})
+  => ":nick!login@example.com PRIVMSG #channel :Message goes here")
+
+(fact "can parse a message line into a map"
+  (line->message ":nick!login@example.com PRIVMSG #channel :Message goes here")
+  => {:type    ::msg/privmsg
+      :sender  "nick"
+      :login   "login"
+      :host    "example.com"
+      :target  "#channel"
+      :message "Message goes here"})
+
